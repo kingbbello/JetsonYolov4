@@ -8,12 +8,7 @@ import cv2
 import numpy as np
 import darknet
 
-# Check if GPIO module is available or not
-try:
-    import RPi.GPIO as GPIO
-except ImportError:
-    print ("Cannot locate RPi.GPIO module!")
-    sys.exit(1)
+
 
 def parser():
     parser = argparse.ArgumentParser(description="YOLO Object Detection")
@@ -118,27 +113,6 @@ def image_detection(image_path, network, class_names, class_colors, thresh):
     darknet.copy_image_from_bytes(darknet_image, image_resized.tobytes())
     detections = darknet.detect_image(network, class_names, darknet_image, thresh=thresh)
 
-    # Setup BCM Mode
-    GPIO.setmode(GPIO.BCM)
-    
-    # Setup pin number
-    pinGreen =  18 #Green led
-    pinRed = 24 #Red led
-    # Setup the pin as output direction
-    valueLow = GPIO.LOW
-    valueHigh = GPIO.HIGH
-    GPIO.setup(pinGreen, GPIO.OUT)
-    GPIO.setup(pinRed, GPIO.OUT)
-
-    if(detections[0][0] == "with_mask"):
-        GPIO.output(pinGreen, valueHigh)
-        GPIO.output(pinRed, valueLow)
-    else:
-        GPIO.output(pinRed, valueHigh)
-        GPIO.output(pinGreen, valueLow)
-    # Clean it up
-    GPIO.cleanup()
-
     darknet.free_image(darknet_image)
     image = darknet.draw_boxes(detections, image_resized, class_colors)
     return cv2.cvtColor(image, cv2.COLOR_BGR2RGB), detections
@@ -240,16 +214,6 @@ def main():
                 break
             image_name = images[index]
         else:
-            GPIO.setmode(GPIO.BCM)
-            # Setup pin number
-            pinGreen =  18 #Green led
-            pinRed = 24 #Red led
-	    # Setup the pin as output direction
-            valueLow = GPIO.LOW
-            GPIO.setup(pinGreen, GPIO.OUT)
-            GPIO.setup(pinRed, GPIO.OUT)
-            GPIO.output(pinRed, valueLow)
-            GPIO.output(pinGreen, valueLow)
             image_name = input("Enter Image Path: ")
         prev_time = time.time()
         image, detections = image_detection(
